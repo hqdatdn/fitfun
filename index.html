@@ -27,8 +27,8 @@ header{display:flex;align-items:center;gap:12px}
 .ball::before{content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--ink);opacity:.75;left:8px;top:9px;box-shadow:9px 5px 0 var(--ink),2px 11px 0 var(--ink)}
 h1{font-family:var(--f-display);font-size:26px;line-height:1.1;margin:0;letter-spacing:-.01em}
 .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
-nav a{text-align:center;padding:9px 2px;border-radius:9px;color:var(--muted);text-decoration:none;font-weight:500;font-size:13px;cursor:pointer}
+nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+nav a{text-align:center;padding:9px 0;border-radius:9px;color:var(--muted);text-decoration:none;font-weight:500;font-size:12.5px;white-space:nowrap;letter-spacing:-.01em;cursor:pointer}
 nav a[aria-current="page"]{background:var(--court);color:var(--bg);font-weight:600}
 nav a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--court);outline-offset:2px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
@@ -106,6 +106,15 @@ button.danger{color:var(--bad);border-color:var(--bad)}
 .hl{font-size:13px;color:var(--muted);padding:6px 0;border-top:1px solid var(--line)}
 .pr{display:grid;grid-template-columns:minmax(0,1fr) 54px 54px;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
 .pr .nm{font-weight:600;overflow-wrap:anywhere}
+.fundtop{background:var(--court);color:var(--bg);border-radius:14px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.fundtop b{font-family:var(--f-display);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.fundtop .t{font-weight:600;font-size:16px}.fundtop .s{font-size:12.5px;opacity:.85}
+.debt{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.debt:first-of-type{border-top:0}
+.debt .nm{font-weight:600}.debt .nt{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere;white-space:pre-line}
+.debt .amt{font-family:var(--f-display);font-weight:700;font-size:20px;color:var(--bad);flex:none;font-variant-numeric:tabular-nums}
+.card.guest{background:var(--warn-bg);border-color:transparent}.card.guest .nt{color:var(--warn)}
+.sum{display:flex;justify-content:space-between;font-weight:600;padding:4px 0}.sum.big{color:var(--court);font-size:17px}
 </style>
 </head>
 <body>
@@ -122,6 +131,7 @@ button.danger{color:var(--bad);border-color:var(--bad)}
     <a data-v="quan-tri">Trận đấu</a>
     <a data-v="doi-dau">Đối đầu</a>
     <a data-v="cap-doi">Cặp đôi</a>
+    <a data-v="quy-san">Quỹ sân</a>
   </nav>
 
   <section id="v-xep-hang">
@@ -196,6 +206,10 @@ button.danger{color:var(--bad);border-color:var(--bad)}
       <p class="note">Chỉ tính cặp đã đánh chung từ 3 trận trở lên.</p>
     </div>
   </section>
+
+  <section id="v-quy-san" hidden>
+    <div id="fund"><div class="card"><div class="empty"><b>Đang tải sổ quỹ…</b></div></div></div>
+  </section>
 </div>
 
 <dialog id="pd" aria-labelledby="pdName"><div id="pdBody"></div></dialog>
@@ -219,7 +233,8 @@ var API="https://script.google.com/macros/s/AKfycbxMTSs86SxRxNtBM-m4jXsQJYOuOkwU
 function call(fn){
   var args=[].slice.call(arguments,1);
   if(typeof google==="undefined"||!google.script){
-    var req=fn==="getMatches"?fetch(API+"?api=matches",{cache:"no-store"})
+    var GET={getMatches:"matches",getFund:"fund"};
+    var req=GET[fn]?fetch(API+"?api="+GET[fn],{cache:"no-store"})
       :fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn:fn,args:args})});
     return req.then(function(r){if(!r.ok)throw "Máy chủ lỗi ("+r.status+").";return r.json();},function(){throw "Không kết nối được máy chủ.";})
       .then(function(j){if(!j.ok)throw j.error||"Có lỗi xảy ra.";return j.data;});
@@ -342,6 +357,28 @@ function drawPairs(){
     return '<div class="pr"><span class="nm">'+esc(x.k)+'</span><span style="text-align:center;color:var(--muted)">'+x.w+'-'+(x.g-x.w)+'</span><span class="'+(pc>=50?'pos':'neg')+'" style="text-align:right;font-weight:600">'+pc+'%</span></div>';
   }).join(""):'<div class="empty"><b>Chưa có cặp nào đủ 3 trận</b>Các cặp đánh chung nhiều trận sẽ hiện ở đây.</div>';
 }
+// Quỹ sân: đọc từ sổ "Trang tính1" (đơn vị nghìn đồng). Chỉ hiện người còn nợ; ai hết nợ gom một dòng.
+function money(v){return Math.round(v).toLocaleString("vi-VN");}
+function drawFund(f){
+  var box=el("fund");
+  if(!f){box.innerHTML='<div class="card"><div class="empty"><b>Chưa tải được sổ quỹ</b>Tải lại trang để thử lại.</div></div>';return;}
+  var owe=f.members.filter(function(m){return m.debt>0;}).sort(function(a,b){return b.debt-a.debt;});
+  var paid=f.members.filter(function(m){return m.debt<=0;}).map(function(m){return m.n;});
+  var mem=owe.reduce(function(s,m){return s+m.debt;},0),gs=f.guestScar?f.guestScar.debt:0,gc=f.guestCourt?f.guestCourt.debt:0;
+  function row(m){return '<div class="debt"><div><div class="nm">'+esc(m.n)+'</div>'+(m.note?'<div class="nt">'+esc(m.note)+'</div>':'')+'</div><span class="amt">'+money(m.debt)+'</span></div>';}
+  var h='<div class="fundtop"><div><div class="t">Tổng quỹ hiện có</div><div class="s">Số dư sau buổi '+esc(f.fundDate)+'</div></div><b>'+(f.fund==null?'–':money(f.fund))+'</b></div>';
+  h+='<div class="card" style="margin-top:16px"><h2>Thành viên còn nợ</h2>'+(owe.length?owe.map(row).join(""):'<div class="empty"><b>Không ai nợ</b></div>')+'</div>';
+  [["Vãng lai · tiền sẹo",f.guestScar],["Vãng lai · tiền sân",f.guestCourt]].forEach(function(g){
+    if(g[1]&&g[1].debt>0)h+='<div class="card guest" style="margin-top:16px">'+row({n:g[0],debt:g[1].debt,note:g[1].note})+'</div>';
+  });
+  h+='<div class="card" style="margin-top:16px"><div class="sum big"><span>Tổng thành viên nợ</span><span>'+money(mem)+'</span></div>'+
+    '<div class="sum"><span>Tổng cả vãng lai</span><span>'+money(mem+gs+gc)+'</span></div>'+
+    (f.fund!=null?'<div class="sum"><span>Quỹ khi thu đủ nợ</span><span>'+money(f.fund+mem+gs+gc)+'</span></div>':'')+
+    (paid.length?'<p class="note">Đã hết nợ: '+esc(paid.join(", "))+'</p>':'')+
+    '<p class="note">Đơn vị: nghìn đồng (25 = 25.000đ). Số liệu lấy trực tiếp từ sổ Quỹ sân.</p></div>';
+  box.innerHTML=h;
+}
+
 // Tên gọn cho danh sách trận để mỗi trận vừa một hàng trên điện thoại.
 var SHORT={"Tùng Danatel":"Tùng Dana"};
 function short(n){return SHORT[n]||n;}
@@ -369,7 +406,7 @@ function drawAll(){drawNames();drawRank();drawRecent();drawH2H();drawPairs();
 
 function show(v){
   view=v;
-  ["xep-hang","quan-tri","doi-dau","cap-doi"].forEach(function(k){el("v-"+k).hidden=k!==v;});
+  ["xep-hang","quan-tri","doi-dau","cap-doi","quy-san"].forEach(function(k){el("v-"+k).hidden=k!==v;});
   [].forEach.call(document.querySelectorAll("nav a"),function(a){if(a.dataset.v===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
 }
 [].forEach.call(document.querySelectorAll("nav a"),function(a){
@@ -386,6 +423,7 @@ function setAdmin(p){
   stopEdit();
 }
 function load(){
+  call("getFund").then(drawFund).catch(function(){drawFund(null);});
   return call("getMatches").then(function(a){matches=a;drawAll();})
     .catch(function(){el("status").textContent="Chưa tải được dữ liệu. Tải lại trang để thử lại.";});
 }
