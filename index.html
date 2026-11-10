@@ -139,7 +139,7 @@ button.danger{color:var(--bad);border-color:var(--bad)}
       <h2>Xếp hạng trình độ</h2>
       <div class="row head"><span>#</span><span>Tên</span><span class="num">Elo</span><span class="mid">Trận</span><span class="mid">T-B</span><span class="num">+/-</span><span class="num">Tỉ lệ</span></div>
       <div id="rank"></div>
-      <p class="note">17 thành viên chính thức, ai cũng bắt đầu ở 2600 điểm. Thắng cặp mạnh hơn được cộng nhiều, thắng đậm cũng cộng nhiều hơn. Người đang xếp dưới thắng được người xếp trên thì được thưởng thêm 5% cho mỗi bậc chênh lệch, tối đa +50%. "Trận" là tổng số trận, "T-B" là số trận thắng - thua, "+/-" là tổng hiệu số điểm, "Tỉ lệ" là tỉ lệ thắng. Xếp hạng theo thứ tự: điểm Elo, rồi hiệu số, rồi tỉ lệ thắng, rồi số trận. Bấm vào tên để xem lịch sử thi đấu.</p>
+      <p class="note">18 thành viên chính thức, ai cũng bắt đầu ở 2600 điểm. Thắng cặp mạnh hơn được cộng nhiều, thắng đậm cũng cộng nhiều hơn. Người đang xếp dưới thắng được người xếp trên thì được thưởng thêm 5% cho mỗi bậc chênh lệch, tối đa +50%. "Trận" là tổng số trận, "T-B" là số trận thắng - thua, "+/-" là tổng hiệu số điểm, "Tỉ lệ" là tỉ lệ thắng. Xếp hạng theo thứ tự: điểm Elo, rồi hiệu số, rồi tỉ lệ thắng, rồi số trận. Bấm vào tên để xem lịch sử thi đấu.</p>
     </div>
   </section>
 
@@ -216,7 +216,7 @@ button.danger{color:var(--bad);border-color:var(--bad)}
 
 <script>
 var G="Vãng lai";
-var ROSTER=["Minh Hoàng","Vũ","Rô","Thìn","Đạt","Toàn","Trung","Phong","Hùng","Hoàng Car","Tiến","Tùng Danatel","Thương","Tùn","Tèo","Sơn R","Long VL"];
+var ROSTER=["Minh Hoàng","Vũ","Rô","Thìn","Đạt","Toàn","Trung","Phong","Hùng","Hoàng Car","Tiến","Tùng Danatel","Thương","Tùn","Tèo","Sơn R","Long VL","Chú"];
 var START=2600; // Elo khởi điểm của mọi người, kể cả vãng lai
 var ROSTERSET={};ROSTER.forEach(function(n){ROSTERSET[n]=1;});
 var matches=[],pw="",editing=null,view="xep-hang";
